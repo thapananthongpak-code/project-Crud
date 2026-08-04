@@ -1,107 +1,65 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { RadioButton } from 'react-native-paper'; // npm install ....
-import api from '../utils/crud-api';
+import { updatePhone } from "@/api/phones";
+import PhoneForm from "@/components/PhoneForm";
+import { useToast } from "@/components/Toast";
+import type { PhoneDraft } from "@/types/phone";
+import { describeError } from "@/utils/crud-api";
+import * as Haptics from "expo-haptics";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Platform } from "react-native";
 
-const EditPhone = () => {
-    const {id, name, sect, tel} = useLocalSearchParams();
-    const [newName, setNewName] = useState(name);
-    const [newSect, setNewSect] = useState(sect);
-    const [newTel, setNewTel] = useState(tel);
-    const router = useRouter();
+/** Route params always arrive as string | string[] — collapse them safely. */
+function param(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
 
-    const updatePhone = async () => {
-        if(name===''|| sect==='' || tel==='') {
-            console.log("Please Enter phone info");
-            Alert.alert("Please Enter phone info");
-            return;
-        }
-        try {
-            const res = await api.put('phones/'+id, {
-                name: newName,
-                sect: newSect,
-                tel: newTel
-            });
-            router.navigate('/');
-            //console.log(res);
-        } catch(err) {
-            console.log(err);
-        }
+export default function EditPhone() {
+  const router = useRouter();
+  const toast = useToast();
+  const params = useLocalSearchParams<{
+    id?: string;
+    name?: string;
+    sect?: string;
+    tel?: string;
+  }>();
+
+  const id = param(params.id);
+
+  const handleSubmit = async (draft: PhoneDraft) => {
+    if (!id) {
+      toast.show({ message: "That contact is missing an id.", tone: "error" });
+      return;
     }
 
-    return(
-        <View style={styles.container}>
-            <Text style={styles.title}>Update Information</Text>
-            <Text style={{fontWeight: 'bold'}}>Name: </Text>
-            <TextInput style={styles.input}
-                    value={newName}
-                    onChangeText={(text)=> setNewName(text)}
-                    placeholder='Your Name' />
-            <RadioButton.Group  value={newSect}
-                onValueChange={value => setNewSect(value)}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    <Text style={{fontWeight: 'bold'}}>Section: </Text>
-                    <RadioButton value="CED" />
-                    <Text>CED</Text>
-                    <RadioButton value="TCT" />
-                    <Text>TCT</Text>
-                </View>
-            </RadioButton.Group>
-            <Text style={{fontWeight: 'bold'}}>Tel: </Text>
-            <TextInput style={styles.input}
-                    value={newTel}
-                    onChangeText={(text)=> setNewTel(text)}
-                    placeholder='Phone No.' />
+    try {
+      await updatePhone(id, draft);
 
-            <View style={{flexDirection: 'row', justifyContent: 'center', marginTop: 20,}}>
-                <TouchableOpacity onPress={()=>router.back()}
-                    style={{backgroundColor: 'rgb(209, 182, 2)', padding: 10,
-                        borderRadius: 5, marginRight: 10,
-                    }}>
-                    <Text style={{color: 'white', fontWeight: 'bold',
-                        textAlign: 'center',
-                    }}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={()=>updatePhone()}
-                    style={{backgroundColor: 'rgb(200, 100, 50)', padding: 10,
-                        borderRadius: 5,
-                    }}>
-                    <Text style={{color: 'white', fontWeight: 'bold',
-                        textAlign: 'center',
-                    }}>Update Info</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    )
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      }
+
+      if (router.canGoBack()) router.back();
+      else router.replace("/");
+
+      toast.show({ message: `${draft.name} updated.`, tone: "success" });
+    } catch (err) {
+      toast.show({ message: describeError(err), tone: "error" });
+    }
+  };
+
+  return (
+    <PhoneForm
+      title="Edit contact"
+      subtitle="Update the details and save your changes."
+      submitLabel="Save changes"
+      submitIcon="save"
+      avatarSeed={id}
+      initial={{
+        name: param(params.name),
+        sect: param(params.sect),
+        tel: param(params.tel),
+      }}
+      onSubmit={handleSubmit}
+    />
+  );
 }
-export default EditPhone;
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        margin: 10,
-        padding: 20,
-        backgroundColor: '#ddd',
-    },
-    title:{
-        fontSize: 32,
-        color: '#47F',
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    form: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        backgroundColor: '#DDF',
-        paddingHorizontal: 20,
-    },
-    input: {
-        height: 50,
-        borderColor: '#ccc',
-        padding: 10,
-        borderRadius: 5,
-        backgroundColor: 'white',
-    },
-});
