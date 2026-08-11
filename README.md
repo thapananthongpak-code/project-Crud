@@ -7,24 +7,27 @@ local `json-server` REST API. Full CRUD, with a modern light/dark interface.
 
 ## Getting started
 
-The app needs two processes running side by side.
-
-**1. Start the API**
-
-```bash
-cd phone-server
-npm install
-npm start          # json-server on port 3008
-```
-
-**2. Start the app**
+**1. Install dependencies — both folders**
 
 ```bash
 npm install
-npx expo start
+npm install --prefix phone-server
 ```
+
+**2. Start everything**
+
+```bash
+npm run dev
+```
+
+That runs the API (`json-server` on port 3008) and the Expo dev server together, prefixing each
+line with `[api]` or `[app]`. One `Ctrl+C` stops both.
 
 Then press `i` (iOS), `a` (Android), `w` (web), or scan the QR code with Expo Go.
+
+> **The app needs both processes.** If you only start Expo, every screen shows *"Can't load your
+> contacts"* — that is the API being unreachable, not a bug. Run them separately with `npm run
+> server` and `npm start` if you prefer two terminals.
 
 > **On a physical device?** Keep your phone on the same Wi-Fi as your computer. The app reads the
 > Metro dev-server host and points itself at `http://<your-lan-ip>:3008` automatically — no manual
