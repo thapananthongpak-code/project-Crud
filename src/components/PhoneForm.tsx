@@ -53,6 +53,10 @@ export default function PhoneForm({
   const [saving, setSaving] = useState(false);
 
   const telRef = useRef<TextInput>(null);
+  // The keyboard's "done" key stays live while `saving` re-renders, so a quick
+  // double tap would send the request twice and create the contact twice. State
+  // updates too late to guard with; a ref flips synchronously.
+  const savingRef = useRef(false);
 
   const close = () => {
     if (router.canGoBack()) router.back();
@@ -60,6 +64,8 @@ export default function PhoneForm({
   };
 
   const submit = async () => {
+    if (savingRef.current) return;
+
     const draft: PhoneDraft = { name: name.trim(), sect, tel: tel.trim() };
     const found = validateDraft(draft);
 
@@ -69,10 +75,12 @@ export default function PhoneForm({
     }
 
     setErrors({});
+    savingRef.current = true;
     setSaving(true);
     try {
       await onSubmit(draft);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -26,12 +27,16 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemeName>(DEFAULT_THEME);
+  // The stored value is only the starting point. If the user reaches the toggle
+  // before that read resolves, applying it would revert the choice they just
+  // made — and leave state disagreeing with what was written.
+  const chosen = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     AsyncStorage.getItem(STORAGE_KEY)
       .then((stored) => {
-        if (cancelled) return;
+        if (cancelled || chosen.current) return;
         // Older builds stored "system"; anything unrecognised falls back to the default.
         if (stored === "light" || stored === "dark") setPreferenceState(stored);
       })
@@ -44,6 +49,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setPreference = useCallback((next: ThemeName) => {
+    chosen.current = true;
     setPreferenceState(next);
     AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
   }, []);
