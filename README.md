@@ -20,10 +20,11 @@ npm install --prefix phone-server
 npm start
 ```
 
-That runs the API (`json-server` on port 3008) and the Expo dev server together, prefixing each
-line with `[api]` or `[app]`. One `Ctrl+C` stops both.
+That runs the API (`json-server` on port 3008) alongside the Expo dev server, tagging the API's
+output with `[api]`. Expo keeps the terminal itself, so its shortcuts still work — press `i` (iOS),
+`a` (Android), `w` (web), `r` (reload), or scan the QR code with Expo Go. One `Ctrl+C` stops both.
 
-Then press `i` (iOS), `a` (Android), `w` (web), or scan the QR code with Expo Go.
+`npm run ios`, `npm run android` and `npm run web` do the same and open that platform straight away.
 
 > **The app needs both processes.** The UI is only a client — every contact is read from and written
 > to `json-server`, so with the API down every screen shows *"Can't load your contacts"*. That is the
